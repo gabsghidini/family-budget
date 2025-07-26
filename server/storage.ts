@@ -3,7 +3,7 @@ import {
   categories,
   transactions,
   type User,
-  type UpsertUser,
+  type InsertUser,
   type Category,
   type InsertCategory,
   type Transaction,
@@ -16,9 +16,9 @@ import { eq, and, desc, sum, sql } from "drizzle-orm";
 // Interface for storage operations
 export interface IStorage {
   // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   
   // Category operations
   getCategories(userId: string): Promise<Category[]>;
@@ -39,24 +39,20 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
-
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
       .returning();
     return user;
   }
@@ -91,7 +87,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(categories)
       .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Transaction operations
@@ -143,7 +139,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(transactions)
       .where(and(eq(transactions.id, transactionId), eq(transactions.userId, userId)));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Analytics
