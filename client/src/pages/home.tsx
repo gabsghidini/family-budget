@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import DashboardView from "@/components/dashboard-view";
@@ -14,29 +14,18 @@ import { Bell, Settings, Wallet } from "lucide-react";
 type ViewType = "dashboard" | "transactions" | "categories" | "reports";
 
 export default function Home() {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const [activeView, setActiveView] = useState<ViewType>("dashboard");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"income" | "expense">("expense");
 
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // This page should only be rendered if user is authenticated (handled by App.tsx)
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    if (user) {
+      window.location.href = "/api/logout";
+    }
   };
 
   const openAddModal = (type: "income" | "expense") => {
@@ -57,8 +46,8 @@ export default function Home() {
     );
   }
 
-  if (!isAuthenticated) {
-    return null; // Will redirect via useEffect
+  if (!user) {
+    return null; // Will be handled by App.tsx routing
   }
 
   return (

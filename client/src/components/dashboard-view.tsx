@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { isUnauthorizedError } from "@/lib/authUtils";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,53 +34,14 @@ export default function DashboardView({ onAddTransaction }: DashboardViewProps) 
 
   const { data: monthlyBalance, isLoading: balanceLoading } = useQuery<MonthlyBalance>({
     queryKey: ["/api/analytics/monthly", year, month],
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-    },
   });
 
   const { data: recentTransactions = [], isLoading: transactionsLoading } = useQuery<TransactionWithCategory[]>({
     queryKey: ["/api/transactions"],
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-    },
   });
 
   const { data: categoryExpenses = [], isLoading: categoriesLoading } = useQuery<CategoryExpense[]>({
     queryKey: ["/api/analytics/categories", year, month],
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-    },
   });
 
   const formatCurrency = (amount: number) => {
