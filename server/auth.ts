@@ -6,7 +6,6 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
-import connectPg from "connect-pg-simple";
 
 declare global {
   namespace Express {
@@ -30,17 +29,10 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  const PostgresSessionStore = connectPg(session);
-  const sessionStore = new PostgresSessionStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-  });
-
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "budget-app-secret-key-2024",
     resave: false,
     saveUninitialized: false,
-    store: sessionStore,
     cookie: {
       httpOnly: true,
       secure: false, // Set to true in production with HTTPS
