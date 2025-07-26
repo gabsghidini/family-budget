@@ -8,6 +8,7 @@ import {
   text,
   decimal,
   pgEnum,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -36,6 +37,7 @@ export const users = pgTable("users", {
 });
 
 export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense"]);
+export const alertPeriodEnum = pgEnum("alert_period", ["daily", "weekly", "monthly"]);
 
 export const categories = pgTable("categories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -58,10 +60,34 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const savingsGoals = pgTable("savings_goals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  targetAmount: decimal("target_amount", { precision: 10, scale: 2 }).notNull(),
+  currentAmount: decimal("current_amount", { precision: 10, scale: 2 }).notNull().default("0"),
+  targetDate: timestamp("target_date"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const spendingAlerts = pgTable("spending_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  categoryId: varchar("category_id").references(() => categories.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  limitAmount: decimal("limit_amount", { precision: 10, scale: 2 }).notNull(),
+  period: alertPeriodEnum("period").notNull().default("monthly"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   categories: many(categories),
   transactions: many(transactions),
+  savingsGoals: many(savingsGoals),
+  spendingAlerts: many(spendingAlerts),
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -79,6 +105,24 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   }),
   category: one(categories, {
     fields: [transactions.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const savingsGoalsRelations = relations(savingsGoals, ({ one }) => ({
+  user: one(users, {
+    fields: [savingsGoals.userId],
+    references: [users.id],
+  }),
+}));
+
+export const spendingAlertsRelations = relations(spendingAlerts, ({ one }) => ({
+  user: one(users, {
+    fields: [spendingAlerts.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [spendingAlerts.categoryId],
     references: [categories.id],
   }),
 }));
@@ -102,6 +146,18 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true,
 });
 
+export const insertSavingsGoalSchema = createInsertSchema(savingsGoals).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+});
+
+export const insertSpendingAlertSchema = createInsertSchema(spendingAlerts).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -109,6 +165,13 @@ export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type SavingsGoal = typeof savingsGoals.$inferSelect;
+export type InsertSavingsGoal = z.infer<typeof insertSavingsGoalSchema>;
+export type SpendingAlert = typeof spendingAlerts.$inferSelect;
+export type InsertSpendingAlert = z.infer<typeof insertSpendingAlertSchema>;
 export type TransactionWithCategory = Transaction & {
   category: Category;
+};
+export type SpendingAlertWithCategory = SpendingAlert & {
+  category: Category | null;
 };

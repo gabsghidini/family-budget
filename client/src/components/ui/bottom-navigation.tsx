@@ -1,9 +1,9 @@
 interface BottomNavigationProps {
   activeView: string;
-  onViewChange: (view: "dashboard" | "transactions" | "categories" | "reports") => void;
+  onViewChange: (view: "dashboard" | "transactions" | "categories" | "savings" | "alerts" | "reports") => void;
 }
 
-import { Home, List, Tags, BarChart3 } from "lucide-react";
+import { Home, List, Tags, Target, AlertTriangle, BarChart3 } from "lucide-react";
 import { Button } from "./button";
 
 export default function BottomNavigation({ activeView, onViewChange }: BottomNavigationProps) {
@@ -11,6 +11,8 @@ export default function BottomNavigation({ activeView, onViewChange }: BottomNav
     { key: "dashboard", label: "Início", icon: Home },
     { key: "transactions", label: "Histórico", icon: List },
     { key: "categories", label: "Categorias", icon: Tags },
+    { key: "savings", label: "Metas", icon: Target },
+    { key: "alerts", label: "Alertas", icon: AlertTriangle },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
   ] as const;
 

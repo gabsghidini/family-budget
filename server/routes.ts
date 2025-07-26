@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertCategorySchema, insertTransactionSchema } from "@shared/schema";
+import { insertCategorySchema, insertTransactionSchema, insertSavingsGoalSchema, insertSpendingAlertSchema } from "@shared/schema";
 import { z } from "zod";
 
 function isAuthenticated(req: any, res: any, next: any) {
@@ -182,6 +182,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching category expenses:", error);
       res.status(500).json({ message: "Failed to fetch category expenses" });
+    }
+  });
+
+  // Savings Goals routes
+  app.get('/api/savings-goals', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const goals = await storage.getSavingsGoals(userId);
+      res.json(goals);
+    } catch (error) {
+      console.error("Error fetching savings goals:", error);
+      res.status(500).json({ message: "Failed to fetch savings goals" });
+    }
+  });
+
+  app.post('/api/savings-goals', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const goalData = insertSavingsGoalSchema.parse(req.body);
+      const goal = await storage.createSavingsGoal(userId, goalData);
+      res.status(201).json(goal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error creating savings goal:", error);
+      res.status(500).json({ message: "Failed to create savings goal" });
+    }
+  });
+
+  app.put('/api/savings-goals/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const goalId = req.params.id;
+      const goalData = insertSavingsGoalSchema.partial().parse(req.body);
+      const goal = await storage.updateSavingsGoal(userId, goalId, goalData);
+      
+      if (!goal) {
+        return res.status(404).json({ message: "Savings goal not found" });
+      }
+      
+      res.json(goal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error updating savings goal:", error);
+      res.status(500).json({ message: "Failed to update savings goal" });
+    }
+  });
+
+  app.delete('/api/savings-goals/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const goalId = req.params.id;
+      const deleted = await storage.deleteSavingsGoal(userId, goalId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Savings goal not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting savings goal:", error);
+      res.status(500).json({ message: "Failed to delete savings goal" });
+    }
+  });
+
+  // Spending Alerts routes
+  app.get('/api/spending-alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const alerts = await storage.getSpendingAlerts(userId);
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching spending alerts:", error);
+      res.status(500).json({ message: "Failed to fetch spending alerts" });
+    }
+  });
+
+  app.post('/api/spending-alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const alertData = insertSpendingAlertSchema.parse(req.body);
+      const alert = await storage.createSpendingAlert(userId, alertData);
+      res.status(201).json(alert);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error creating spending alert:", error);
+      res.status(500).json({ message: "Failed to create spending alert" });
+    }
+  });
+
+  app.put('/api/spending-alerts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const alertId = req.params.id;
+      const alertData = insertSpendingAlertSchema.partial().parse(req.body);
+      const alert = await storage.updateSpendingAlert(userId, alertId, alertData);
+      
+      if (!alert) {
+        return res.status(404).json({ message: "Spending alert not found" });
+      }
+      
+      res.json(alert);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error updating spending alert:", error);
+      res.status(500).json({ message: "Failed to update spending alert" });
+    }
+  });
+
+  app.delete('/api/spending-alerts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const alertId = req.params.id;
+      const deleted = await storage.deleteSpendingAlert(userId, alertId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Spending alert not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting spending alert:", error);
+      res.status(500).json({ message: "Failed to delete spending alert" });
+    }
+  });
+
+  // Check spending alerts endpoint
+  app.get('/api/spending-alerts/check', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const alerts = await storage.checkSpendingAlerts(userId);
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error checking spending alerts:", error);
+      res.status(500).json({ message: "Failed to check spending alerts" });
     }
   });
 

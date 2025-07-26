@@ -5,13 +5,15 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import DashboardView from "@/components/dashboard-view";
 import TransactionsView from "@/components/transactions-view";
 import CategoriesView from "@/components/categories-view";
+import SavingsGoalsView from "@/components/savings-goals-view";
+import SpendingAlertsView from "@/components/spending-alerts-view";
 import ReportsView from "@/components/reports-view";
 import BottomNavigation from "@/components/ui/bottom-navigation";
 import AddTransactionModal from "@/components/ui/add-transaction-modal";
 import { Button } from "@/components/ui/button";
 import { Bell, Settings, Wallet } from "lucide-react";
 
-type ViewType = "dashboard" | "transactions" | "categories" | "reports";
+type ViewType = "dashboard" | "transactions" | "categories" | "savings" | "alerts" | "reports";
 
 export default function Home() {
   const { user, isLoading } = useAuth();
@@ -84,6 +86,8 @@ export default function Home() {
         {activeView === "dashboard" && <DashboardView onAddTransaction={openAddModal} />}
         {activeView === "transactions" && <TransactionsView />}
         {activeView === "categories" && <CategoriesView />}
+        {activeView === "savings" && <SavingsGoalsView />}
+        {activeView === "alerts" && <SpendingAlertsView />}
         {activeView === "reports" && <ReportsView />}
       </main>
 
