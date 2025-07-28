@@ -1,85 +1,80 @@
 import { sql, relations } from 'drizzle-orm';
 import {
   index,
-  jsonb,
-  pgTable,
-  timestamp,
-  varchar,
+  sqliteTable,
   text,
-  decimal,
-  pgEnum,
-  boolean,
-} from "drizzle-orm/pg-core";
+  integer,
+  real,
+} from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
-export const sessions = pgTable(
+export const sessions = sqliteTable(
   "sessions",
   {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
+    sid: text("sid").primaryKey(),
+    sess: text("sess").notNull(),
+    expire: integer("expire", { mode: 'timestamp' }).notNull(),
   },
-  (table) => [index("IDX_session_expire").on(table.expire)],
+  (table) => ({
+    expireIdx: index("IDX_session_expire").on(table.expire),
+  }),
 );
 
 // User storage table.
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique().notNull(),
-  password: varchar("password").notNull(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text("email").unique().notNull(),
+  password: text("password").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense"]);
-export const alertPeriodEnum = pgEnum("alert_period", ["daily", "weekly", "monthly"]);
-
-export const categories = pgTable("categories", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  name: varchar("name", { length: 100 }).notNull(),
-  icon: varchar("icon", { length: 50 }).notNull().default("fa-tag"),
-  color: varchar("color", { length: 7 }).notNull().default("#1976D2"),
-  type: transactionTypeEnum("type").notNull().default("expense"),
-  createdAt: timestamp("created_at").defaultNow(),
+export const categories = sqliteTable("categories", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  icon: text("icon").notNull().default("fa-tag"),
+  color: text("color").notNull().default("#1976D2"),
+  type: text("type").notNull().default("expense"), // "income" or "expense"
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-export const transactions = pgTable("transactions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  categoryId: varchar("category_id").references(() => categories.id, { onDelete: "cascade" }).notNull(),
-  description: varchar("description", { length: 255 }).notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  type: transactionTypeEnum("type").notNull(),
-  date: timestamp("date").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+export const transactions = sqliteTable("transactions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  categoryId: text("category_id").references(() => categories.id, { onDelete: "cascade" }).notNull(),
+  description: text("description").notNull(),
+  amount: real("amount").notNull(),
+  type: text("type").notNull(), // "income" or "expense"
+  date: integer("date", { mode: 'timestamp' }).notNull(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-export const savingsGoals = pgTable("savings_goals", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  name: varchar("name", { length: 100 }).notNull(),
-  targetAmount: decimal("target_amount", { precision: 10, scale: 2 }).notNull(),
-  currentAmount: decimal("current_amount", { precision: 10, scale: 2 }).notNull().default("0"),
-  targetDate: timestamp("target_date"),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+export const savingsGoals = sqliteTable("savings_goals", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  targetAmount: real("target_amount").notNull(),
+  currentAmount: real("current_amount").notNull().default(0),
+  targetDate: integer("target_date", { mode: 'timestamp' }),
+  isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-export const spendingAlerts = pgTable("spending_alerts", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  categoryId: varchar("category_id").references(() => categories.id, { onDelete: "cascade" }),
-  name: varchar("name", { length: 100 }).notNull(),
-  limitAmount: decimal("limit_amount", { precision: 10, scale: 2 }).notNull(),
-  period: alertPeriodEnum("period").notNull().default("monthly"),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+export const spendingAlerts = sqliteTable("spending_alerts", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  categoryId: text("category_id").references(() => categories.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  limitAmount: real("limit_amount").notNull(),
+  period: text("period").notNull().default("monthly"), // "daily", "weekly", "monthly"
+  isActive: integer("is_active", { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
 // Relations

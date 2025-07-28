@@ -164,8 +164,8 @@ export class DatabaseStorage implements IStorage {
 
   // Analytics
   async getMonthlyBalance(userId: string, year: number, month: number): Promise<{ income: number; expenses: number; balance: number }> {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
+    const startDate = new Date(year, month - 1, 1).getTime();
+    const endDate = new Date(year, month, 0, 23, 59, 59).getTime();
 
     const results = await db
       .select({
@@ -193,8 +193,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCategoryExpenses(userId: string, year: number, month: number): Promise<Array<{ categoryId: string; categoryName: string; total: number; percentage: number }>> {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
+    const startDate = new Date(year, month - 1, 1).getTime();
+    const endDate = new Date(year, month, 0, 23, 59, 59).getTime();
 
     const results = await db
       .select({
