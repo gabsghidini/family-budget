@@ -59,6 +59,11 @@ Se aparecer "tela cheia de texto":
 - ✅ **Usar**: Build command `npm run build:client`
 - ✅ **Output**: `client/dist`
 
+**Erro de conflito**: `Two or more files have conflicting paths`
+- ✅ **Problema**: Arquivos `api/index.js` e `api/index.ts` conflitam
+- ✅ **Solução**: Manter apenas `api/index.ts` (removido o .js)
+- ✅ **Status**: Corrigido ✅
+
 ### 📝 Configuração do Vercel Dashboard
 
 1. **Build Command**: `npm run build:client`
@@ -70,5 +75,13 @@ Se aparecer "tela cheia de texto":
 
 ```
 Vercel Edge     →  Static Assets (client/dist/)
-Vercel Function →  API Routes (server/index.ts)
+Vercel Function →  API Routes (api/index.ts)
 ```
+
+## ✅ Status do Deploy
+
+- ✅ Frontend build funcionando (`npm run build:client`)
+- ✅ API handler criado (`api/index.ts`)
+- ✅ Conflito de arquivos resolvido (removido `api/index.js`)
+- ✅ Configuração Vercel simplificada
+- 🔄 Testando deploy automático...
