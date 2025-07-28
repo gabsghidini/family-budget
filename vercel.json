@@ -2,11 +2,6 @@
   "version": 2,
   "buildCommand": "npm run build:client",
   "outputDirectory": "client/dist",
-  "functions": {
-    "server/index.ts": {
-      "runtime": "@vercel/node@18"
-    }
-  },
   "routes": [
     {
       "src": "/api/(.*)",

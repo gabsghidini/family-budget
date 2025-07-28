@@ -54,6 +54,18 @@ Se aparecer "tela cheia de texto":
 2. Confirme se o build foi feito corretamente
 3. Verifique os logs do Vercel Dashboard
 
+**Erro comum**: `Function Runtimes must have a valid version`
+- ✅ **Solução**: Configuração do `vercel.json` foi simplificada
+- ✅ **Usar**: Build command `npm run build:client`
+- ✅ **Output**: `client/dist`
+
+### 📝 Configuração do Vercel Dashboard
+
+1. **Build Command**: `npm run build:client`
+2. **Output Directory**: `client/dist`
+3. **Install Command**: `npm install`
+4. **Node.js Version**: 18.x ou 20.x
+
 ## 📁 Estrutura de Deploy
 
 ```

@@ -1,0 +1,7 @@
+{
+  "name": "family-budget-client",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd .. && npm run build:client"
+  }
+}
