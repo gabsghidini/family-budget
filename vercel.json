@@ -2,10 +2,23 @@
   "version": 2,
   "buildCommand": "npm run build:client",
   "outputDirectory": "client/dist",
+  "functions": {
+    "api/index.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server/index.ts"
+      "dest": "/api/index.ts"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/client/dist/assets/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|ico|png|svg|jpg|jpeg|gif|woff|woff2|ttf|eot))",
+      "dest": "/client/dist/$1"
     },
     {
       "src": "/(.*)",
