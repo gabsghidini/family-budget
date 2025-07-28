@@ -1,3 +1,19 @@
+// Family group invites
+export const familyGroupInvites = sqliteTable("family_group_invites", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  familyGroupId: text("family_group_id").references(() => familyGroups.id, { onDelete: "cascade" }).notNull(),
+  invitedUserId: text("invited_user_id").references(() => users.id, { onDelete: "cascade" }),
+  invitedEmail: text("invited_email").notNull(),
+  status: text("status").notNull().default("pending"), // pending, accepted, rejected
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+// Family group table
+export const familyGroups = sqliteTable("family_groups", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
 import { sql, relations } from 'drizzle-orm';
 import {
   index,
@@ -26,6 +42,7 @@ export const sessions = sqliteTable(
 // User storage table.
 export const users = sqliteTable("users", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  familyGroupId: text("family_group_id").references(() => familyGroups.id, { onDelete: "set null" }),
   email: text("email").unique().notNull(),
   password: text("password").notNull(),
   firstName: text("first_name"),
@@ -36,6 +53,7 @@ export const users = sqliteTable("users", {
 
 export const categories = sqliteTable("categories", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  familyGroupId: text("family_group_id").references(() => familyGroups.id, { onDelete: "cascade" }).notNull(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   name: text("name").notNull(),
   icon: text("icon").notNull().default("fa-tag"),
@@ -46,6 +64,7 @@ export const categories = sqliteTable("categories", {
 
 export const transactions = sqliteTable("transactions", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  familyGroupId: text("family_group_id").references(() => familyGroups.id, { onDelete: "cascade" }).notNull(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   categoryId: text("category_id").references(() => categories.id, { onDelete: "cascade" }).notNull(),
   description: text("description").notNull(),
@@ -59,6 +78,7 @@ export const transactions = sqliteTable("transactions", {
 
 export const savingsGoals = sqliteTable("savings_goals", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  familyGroupId: text("family_group_id").references(() => familyGroups.id, { onDelete: "cascade" }).notNull(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   name: text("name").notNull(),
   targetAmount: real("target_amount").notNull(),
@@ -70,6 +90,7 @@ export const savingsGoals = sqliteTable("savings_goals", {
 
 export const spendingAlerts = sqliteTable("spending_alerts", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  familyGroupId: text("family_group_id").references(() => familyGroups.id, { onDelete: "cascade" }).notNull(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   categoryId: text("category_id").references(() => categories.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
@@ -79,6 +100,15 @@ export const spendingAlerts = sqliteTable("spending_alerts", {
   createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+// Relations for family groups
+export const familyGroupsRelations = relations(familyGroups, ({ many }) => ({
+  users: many(users),
+  categories: many(categories),
+  transactions: many(transactions),
+  savingsGoals: many(savingsGoals),
+  spendingAlerts: many(spendingAlerts),
+
+}));
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   categories: many(categories),

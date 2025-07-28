@@ -100,6 +100,7 @@ export function setupAuth(app: Express) {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          familyGroupId: user.familyGroupId,
         });
       });
     } catch (error) {
@@ -125,6 +126,7 @@ export function setupAuth(app: Express) {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          familyGroupId: user.familyGroupId,
         });
       });
     })(req, res, next);
@@ -147,6 +149,7 @@ export function setupAuth(app: Express) {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      familyGroupId: user.familyGroupId,
     });
   });
 }

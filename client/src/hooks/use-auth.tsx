@@ -49,6 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Force invalidate to refetch user data
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Bem-vindo!",
         description: "Login realizado com sucesso",
@@ -70,6 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Force invalidate to refetch user data
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Conta criada!",
         description: "Registro realizado com sucesso",

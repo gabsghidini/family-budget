@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -63,10 +65,11 @@ export default function AuthPage() {
   });
 
   // Redirect if already authenticated
-  if (user && !isLoading) {
-    window.location.href = "/";
-    return null;
-  }
+  useEffect(() => {
+    if (user && !isLoading) {
+      setLocation("/");
+    }
+  }, [user, isLoading, setLocation]);
 
   const onLogin = (data: LoginFormData) => {
     loginMutation.mutate(data);

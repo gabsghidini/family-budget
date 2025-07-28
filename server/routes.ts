@@ -2,8 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertCategorySchema, insertTransactionSchema, insertSavingsGoalSchema, insertSpendingAlertSchema } from "@shared/schema";
+import { insertCategorySchema, insertTransactionSchema, insertSavingsGoalSchema, insertSpendingAlertSchema, users, familyGroupInvites, familyGroups } from "@shared/schema";
 import { z } from "zod";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 function isAuthenticated(req: any, res: any, next: any) {
   if (req.isAuthenticated()) {
@@ -21,8 +23,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Category routes
   app.get('/api/categories', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const categories = await storage.getCategories(userId);
+      const familyGroupId = req.user.familyGroupId;
+      const categories = await storage.getCategories(familyGroupId);
       res.json(categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -32,9 +34,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/categories', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const categoryData = insertCategorySchema.parse(req.body);
-      const category = await storage.createCategory(userId, categoryData);
+      const familyGroupId = req.user.familyGroupId;
+      const userId = req.user.id;
+      const category = await storage.createCategory(familyGroupId, userId, categoryData);
       res.status(201).json(category);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -47,10 +50,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/categories/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const categoryId = req.params.id;
       const categoryData = insertCategorySchema.partial().parse(req.body);
-      const category = await storage.updateCategory(userId, categoryId, categoryData);
+      const familyGroupId = req.user.familyGroupId;
+      const category = await storage.updateCategory(familyGroupId, categoryId, categoryData);
       
       if (!category) {
         return res.status(404).json({ message: "Category not found" });
@@ -68,9 +71,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/categories/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const categoryId = req.params.id;
-      const deleted = await storage.deleteCategory(userId, categoryId);
+      const familyGroupId = req.user.familyGroupId;
+      const deleted = await storage.deleteCategory(familyGroupId, categoryId);
       
       if (!deleted) {
         return res.status(404).json({ message: "Category not found" });
@@ -86,8 +89,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transaction routes
   app.get('/api/transactions', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const transactions = await storage.getTransactions(userId);
+      const familyGroupId = req.user.familyGroupId;
+      const transactions = await storage.getTransactions(familyGroupId);
       res.json(transactions);
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -97,9 +100,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/transactions', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const transactionData = insertTransactionSchema.parse(req.body);
-      const transaction = await storage.createTransaction(userId, transactionData);
+      const familyGroupId = req.user.familyGroupId;
+      const userId = req.user.id;
+      const transaction = await storage.createTransaction(familyGroupId, userId, transactionData);
       res.status(201).json(transaction);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -112,10 +116,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/transactions/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const transactionId = req.params.id;
       const transactionData = insertTransactionSchema.partial().parse(req.body);
-      const transaction = await storage.updateTransaction(userId, transactionId, transactionData);
+      const familyGroupId = req.user.familyGroupId;
+      const transaction = await storage.updateTransaction(familyGroupId, transactionId, transactionData);
       
       if (!transaction) {
         return res.status(404).json({ message: "Transaction not found" });
@@ -133,9 +137,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/transactions/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const transactionId = req.params.id;
-      const deleted = await storage.deleteTransaction(userId, transactionId);
+      const familyGroupId = req.user.familyGroupId;
+      const deleted = await storage.deleteTransaction(familyGroupId, transactionId);
       
       if (!deleted) {
         return res.status(404).json({ message: "Transaction not found" });
@@ -151,7 +155,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Analytics routes
   app.get('/api/analytics/monthly/:year/:month', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
       
@@ -159,7 +162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid year or month" });
       }
       
-      const balance = await storage.getMonthlyBalance(userId, year, month);
+      const familyGroupId = req.user.familyGroupId;
+      const balance = await storage.getMonthlyBalance(familyGroupId, year, month);
       res.json(balance);
     } catch (error) {
       console.error("Error fetching monthly balance:", error);
@@ -169,7 +173,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/analytics/categories/:year/:month', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
       
@@ -177,7 +180,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid year or month" });
       }
       
-      const categoryExpenses = await storage.getCategoryExpenses(userId, year, month);
+      const familyGroupId = req.user.familyGroupId;
+      const categoryExpenses = await storage.getCategoryExpenses(familyGroupId, year, month);
       res.json(categoryExpenses);
     } catch (error) {
       console.error("Error fetching category expenses:", error);
@@ -188,8 +192,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Savings Goals routes
   app.get('/api/savings-goals', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const goals = await storage.getSavingsGoals(userId);
+      const familyGroupId = req.user.familyGroupId;
+      const goals = await storage.getSavingsGoals(familyGroupId);
       res.json(goals);
     } catch (error) {
       console.error("Error fetching savings goals:", error);
@@ -199,9 +203,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/savings-goals', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const goalData = insertSavingsGoalSchema.parse(req.body);
-      const goal = await storage.createSavingsGoal(userId, goalData);
+      const familyGroupId = req.user.familyGroupId;
+      const userId = req.user.id;
+      const goal = await storage.createSavingsGoal(familyGroupId, userId, goalData);
       res.status(201).json(goal);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -214,10 +219,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/savings-goals/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const goalId = req.params.id;
       const goalData = insertSavingsGoalSchema.partial().parse(req.body);
-      const goal = await storage.updateSavingsGoal(userId, goalId, goalData);
+      const familyGroupId = req.user.familyGroupId;
+      const goal = await storage.updateSavingsGoal(familyGroupId, goalId, goalData);
       
       if (!goal) {
         return res.status(404).json({ message: "Savings goal not found" });
@@ -235,9 +240,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/savings-goals/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const goalId = req.params.id;
-      const deleted = await storage.deleteSavingsGoal(userId, goalId);
+      const familyGroupId = req.user.familyGroupId;
+      const deleted = await storage.deleteSavingsGoal(familyGroupId, goalId);
       
       if (!deleted) {
         return res.status(404).json({ message: "Savings goal not found" });
@@ -253,8 +258,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Spending Alerts routes
   app.get('/api/spending-alerts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const alerts = await storage.getSpendingAlerts(userId);
+      const familyGroupId = req.user.familyGroupId;
+      const alerts = await storage.getSpendingAlerts(familyGroupId);
       res.json(alerts);
     } catch (error) {
       console.error("Error fetching spending alerts:", error);
@@ -264,9 +269,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/spending-alerts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const alertData = insertSpendingAlertSchema.parse(req.body);
-      const alert = await storage.createSpendingAlert(userId, alertData);
+      const familyGroupId = req.user.familyGroupId;
+      const userId = req.user.id;
+      const alert = await storage.createSpendingAlert(familyGroupId, userId, alertData);
       res.status(201).json(alert);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -279,10 +285,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/spending-alerts/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const alertId = req.params.id;
       const alertData = insertSpendingAlertSchema.partial().parse(req.body);
-      const alert = await storage.updateSpendingAlert(userId, alertId, alertData);
+      const familyGroupId = req.user.familyGroupId;
+      const alert = await storage.updateSpendingAlert(familyGroupId, alertId, alertData);
       
       if (!alert) {
         return res.status(404).json({ message: "Spending alert not found" });
@@ -300,9 +306,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/spending-alerts/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
       const alertId = req.params.id;
-      const deleted = await storage.deleteSpendingAlert(userId, alertId);
+      const familyGroupId = req.user.familyGroupId;
+      const deleted = await storage.deleteSpendingAlert(familyGroupId, alertId);
       
       if (!deleted) {
         return res.status(404).json({ message: "Spending alert not found" });
@@ -318,12 +324,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Check spending alerts endpoint
   app.get('/api/spending-alerts/check', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const alerts = await storage.checkSpendingAlerts(userId);
+      const familyGroupId = req.user.familyGroupId;
+      const alerts = await storage.checkSpendingAlerts(familyGroupId);
       res.json(alerts);
     } catch (error) {
       console.error("Error checking spending alerts:", error);
       res.status(500).json({ message: "Failed to check spending alerts" });
+    }
+  });
+
+  // Family Groups routes
+  app.get('/api/family-groups', isAuthenticated, async (req: any, res) => {
+    try {
+      const groups = await db.select().from(familyGroups);
+      res.json(groups);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar núcleos familiares" });
+    }
+  });
+
+  app.get('/api/family-groups/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const groupId = req.params.id;
+      const [group] = await db.select().from(familyGroups).where(eq(familyGroups.id, groupId));
+      if (!group) return res.status(404).json({ message: "Núcleo não encontrado" });
+      res.json(group);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar núcleo" });
+    }
+  });
+
+  app.post('/api/family-groups', isAuthenticated, async (req: any, res) => {
+    try {
+      const { name } = req.body;
+      const userId = req.user.id;
+      const [group] = await db.insert(familyGroups).values({ name }).returning();
+      // Adiciona o usuário ao núcleo
+      await db.update(users).set({ familyGroupId: group.id }).where(eq(users.id, userId));
+      res.status(201).json(group);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao criar núcleo familiar" });
+    }
+  });
+
+  app.post('/api/family-groups/:id/join', isAuthenticated, async (req: any, res) => {
+    try {
+      const groupId = req.params.id;
+      const userId = req.user.id;
+      await db.update(users).set({ familyGroupId: groupId }).where(eq(users.id, userId));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao entrar no núcleo familiar" });
+    }
+  });
+
+  app.post('/api/family-groups/leave', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      await db.update(users).set({ familyGroupId: null }).where(eq(users.id, userId));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao sair do núcleo familiar" });
+    }
+  });
+
+  app.get('/api/family-groups/:id/members', isAuthenticated, async (req: any, res) => {
+    try {
+      const groupId = req.params.id;
+      const members = await db.select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email
+      }).from(users).where(eq(users.familyGroupId, groupId));
+      res.json(members);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar membros do núcleo" });
+    }
+  });
+
+  // Family Group Invites routes
+  app.post('/api/family-groups/:groupId/invite', isAuthenticated, async (req: any, res) => {
+    try {
+      console.log('Invite request received:', { groupId: req.params.groupId, body: req.body });
+      const { email } = req.body;
+      const groupId = req.params.groupId;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email é obrigatório" });
+      }
+      
+      // Verifica se usuário existe
+      console.log('Looking for user with email:', email);
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+      console.log('User found:', user);
+      
+      if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+      
+      // Verifica se convite já existe
+      const [existingInvite] = await db.select().from(familyGroupInvites)
+        .where(and(
+          eq(familyGroupInvites.familyGroupId, groupId),
+          eq(familyGroupInvites.invitedUserId, user.id),
+          eq(familyGroupInvites.status, "pending")
+        ));
+      
+      if (existingInvite) {
+        return res.status(400).json({ message: "Convite já foi enviado para este usuário" });
+      }
+      
+      // Cria convite pendente
+      console.log('Creating invite with data:', {
+        familyGroupId: groupId,
+        invitedUserId: user.id,
+        invitedEmail: email,
+        status: "pending"
+      });
+      
+      const [invite] = await db.insert(familyGroupInvites).values({
+        familyGroupId: groupId,
+        invitedUserId: user.id,
+        invitedEmail: email,
+        status: "pending"
+      }).returning();
+      
+      console.log('Invite created successfully:', invite);
+      res.status(201).json(invite);
+    } catch (error) {
+      console.error('Error sending invite:', error);
+      res.status(500).json({ message: "Erro ao enviar convite" });
+    }
+  });
+
+  app.get('/api/family-group-invites', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const invites = await db.select().from(familyGroupInvites).where(and(eq(familyGroupInvites.invitedUserId, userId), eq(familyGroupInvites.status, "pending")));
+      res.json(invites);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar convites" });
+    }
+  });
+
+  app.post('/api/family-group-invites/:inviteId/accept', isAuthenticated, async (req: any, res) => {
+    try {
+      const inviteId = req.params.inviteId;
+      const userId = req.user.id;
+      // Atualiza status do convite
+      await db.update(familyGroupInvites).set({ status: "accepted" }).where(and(eq(familyGroupInvites.id, inviteId), eq(familyGroupInvites.invitedUserId, userId)));
+      // Atualiza núcleo do usuário
+      const [invite] = await db.select().from(familyGroupInvites).where(eq(familyGroupInvites.id, inviteId));
+      if (invite) {
+        await db.update(users).set({ familyGroupId: invite.familyGroupId }).where(eq(users.id, userId));
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao aceitar convite" });
+    }
+  });
+
+  app.post('/api/family-group-invites/:inviteId/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const inviteId = req.params.inviteId;
+      const userId = req.user.id;
+      await db.update(familyGroupInvites).set({ status: "rejected" }).where(and(eq(familyGroupInvites.id, inviteId), eq(familyGroupInvites.invitedUserId, userId)));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao recusar convite" });
     }
   });
 

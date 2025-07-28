@@ -10,6 +10,7 @@ import SpendingAlertsView from "@/components/spending-alerts-view";
 import ReportsView from "@/components/reports-view";
 import BottomNavigation from "@/components/ui/bottom-navigation";
 import AddTransactionModal from "@/components/ui/add-transaction-modal";
+import { SettingsModal } from "@/components/settings-modal";
 import { Button } from "@/components/ui/button";
 import { Bell, Settings, Wallet } from "lucide-react";
 
@@ -20,15 +21,10 @@ export default function Home() {
   const { toast } = useToast();
   const [activeView, setActiveView] = useState<ViewType>("dashboard");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [modalType, setModalType] = useState<"income" | "expense">("expense");
 
   // This page should only be rendered if user is authenticated (handled by App.tsx)
-
-  const handleLogout = () => {
-    if (user) {
-      window.location.href = "/api/logout";
-    }
-  };
 
   const openAddModal = (type: "income" | "expense") => {
     setModalType(type);
@@ -73,7 +69,7 @@ export default function Home() {
               <Button variant="ghost" size="sm" className="p-2">
                 <Bell className="h-5 w-5 text-gray-600" />
               </Button>
-              <Button variant="ghost" size="sm" className="p-2" onClick={handleLogout}>
+              <Button variant="ghost" size="sm" className="p-2" onClick={() => setIsSettingsOpen(true)}>
                 <Settings className="h-5 w-5 text-gray-600" />
               </Button>
             </div>
@@ -100,6 +96,12 @@ export default function Home() {
         onClose={() => setIsAddModalOpen(false)}
         type={modalType}
         onTypeChange={setModalType}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
     </div>
   );
