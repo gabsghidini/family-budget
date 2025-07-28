@@ -38,6 +38,8 @@ const transactionSchema = z.object({
   categoryId: z.string().min(1, "Categoria é obrigatória"),
   date: z.string().min(1, "Data é obrigatória"),
   type: z.enum(["income", "expense"]),
+  isRecurring: z.boolean().optional().default(false),
+  recurringDay: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(1).max(31).optional()),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -61,6 +63,8 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTypeChang
       categoryId: "",
       date: new Date().toISOString().split('T')[0],
       type,
+      isRecurring: false,
+      recurringDay: undefined,
     },
   });
 
@@ -95,6 +99,8 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTypeChang
         ...data,
         amount: data.amount,
         date: new Date(data.date).toISOString(),
+        isRecurring: data.isRecurring ?? false,
+        recurringDay: data.isRecurring ? data.recurringDay ?? null : null,
       };
       const response = await apiRequest("POST", "/api/transactions", payload);
       return response.json();
@@ -226,6 +232,46 @@ export default function AddTransactionModal({ isOpen, onClose, type, onTypeChang
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="isRecurring"
+                  render={({ field }) => (
+                    <FormItem>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={e => field.onChange(e.target.checked)}
+                        />
+                        <span>Recorrente</span>
+                      </label>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch("isRecurring") && (
+                  <FormField
+                    control={form.control}
+                    name="recurringDay"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dia do mês</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min={1}
+                            max={31}
+                            placeholder="Ex: 10"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <div className="flex space-x-3 pt-4">
                   <Button 

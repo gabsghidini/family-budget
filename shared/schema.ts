@@ -50,8 +50,10 @@ export const transactions = sqliteTable("transactions", {
   categoryId: text("category_id").references(() => categories.id, { onDelete: "cascade" }).notNull(),
   description: text("description").notNull(),
   amount: real("amount").notNull(),
-  type: text("type").notNull(), // "income" or "expense"
+  type: text("type").notNull(), // "income" ou "expense"
   date: integer("date", { mode: 'timestamp' }).notNull(),
+  isRecurring: integer("is_recurring", { mode: 'boolean' }).notNull().default(false),
+  recurringDay: integer("recurring_day"), // dia do mês (1-31), opcional
   createdAt: integer("created_at", { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 

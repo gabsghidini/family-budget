@@ -121,6 +121,8 @@ export class DatabaseStorage implements IStorage {
         amount: transactions.amount,
         type: transactions.type,
         date: transactions.date,
+        isRecurring: transactions.isRecurring,
+        recurringDay: transactions.recurringDay,
         createdAt: transactions.createdAt,
         category: {
           id: categories.id,
@@ -141,7 +143,12 @@ export class DatabaseStorage implements IStorage {
   async createTransaction(userId: string, transaction: InsertTransaction): Promise<Transaction> {
     const [newTransaction] = await db
       .insert(transactions)
-      .values({ ...transaction, userId })
+      .values({
+        ...transaction,
+        userId,
+        isRecurring: transaction.isRecurring ?? false,
+        recurringDay: transaction.isRecurring ? transaction.recurringDay ?? null : null,
+      })
       .returning();
     return newTransaction;
   }
