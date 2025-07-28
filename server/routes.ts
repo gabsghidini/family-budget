@@ -406,7 +406,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Family Group Invites routes
   app.post('/api/family-groups/:groupId/invite', isAuthenticated, async (req: any, res) => {
     try {
-      console.log('Invite request received:', { groupId: req.params.groupId, body: req.body });
       const { email } = req.body;
       const groupId = req.params.groupId;
       
@@ -415,9 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verifica se usuário existe
-      console.log('Looking for user with email:', email);
       const [user] = await db.select().from(users).where(eq(users.email, email));
-      console.log('User found:', user);
       
       if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
       
@@ -434,13 +431,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Cria convite pendente
-      console.log('Creating invite with data:', {
-        familyGroupId: groupId,
-        invitedUserId: user.id,
-        invitedEmail: email,
-        status: "pending"
-      });
-      
       const [invite] = await db.insert(familyGroupInvites).values({
         familyGroupId: groupId,
         invitedUserId: user.id,
@@ -448,7 +438,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "pending"
       }).returning();
       
-      console.log('Invite created successfully:', invite);
       res.status(201).json(invite);
     } catch (error) {
       console.error('Error sending invite:', error);
