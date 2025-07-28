@@ -163,24 +163,28 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
+  familyGroupId: true,
   userId: true,
   createdAt: true,
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
+  familyGroupId: true,
   userId: true,
   createdAt: true,
 });
 
 export const insertSavingsGoalSchema = createInsertSchema(savingsGoals).omit({
   id: true,
+  familyGroupId: true,
   userId: true,
   createdAt: true,
 });
 
 export const insertSpendingAlertSchema = createInsertSchema(spendingAlerts).omit({
   id: true,
+  familyGroupId: true,
   userId: true,
   createdAt: true,
 });

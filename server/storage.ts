@@ -19,7 +19,7 @@ import {
   type SpendingAlertWithCategory,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sum, sql } from "drizzle-orm";
+import { eq, and, desc, sum, sql, gte, lte } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -341,7 +341,7 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async checkSpendingAlerts(userId: string): Promise<Array<{ alert: SpendingAlertWithCategory; currentSpending: number; percentageUsed: number }>> {
+  async checkSpendingAlerts(familyGroupId: string): Promise<Array<{ alert: SpendingAlertWithCategory; currentSpending: number; percentageUsed: number }>> {
     const alerts = await this.getSpendingAlerts(familyGroupId);
     const results = [];
 
@@ -367,8 +367,8 @@ export class DatabaseStorage implements IStorage {
       const whereClause = [
         eq(transactions.familyGroupId, familyGroupId),
         eq(transactions.type, 'expense'),
-        sql`${transactions.date} >= ${startDate}`,
-        sql`${transactions.date} <= ${now}`
+        sql`${transactions.date} >= ${startDate.getTime()}`,
+        sql`${transactions.date} <= ${now.getTime()}`
       ];
       if (alert.categoryId) {
         whereClause.push(eq(transactions.categoryId, alert.categoryId));

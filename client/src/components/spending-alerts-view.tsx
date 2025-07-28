@@ -288,7 +288,7 @@ export default function SpendingAlertsView() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Todas as categorias</SelectItem>
+                          <SelectItem value="all">Todas as categorias</SelectItem>
                           {categories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               <span className="flex items-center">

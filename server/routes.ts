@@ -203,6 +203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/savings-goals', isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Received savings goal data:", JSON.stringify(req.body, null, 2));
       const goalData = insertSavingsGoalSchema.parse(req.body);
       const familyGroupId = req.user.familyGroupId;
       const userId = req.user.id;
@@ -210,6 +211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(goal);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.log("Zod validation errors:", JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error creating savings goal:", error);

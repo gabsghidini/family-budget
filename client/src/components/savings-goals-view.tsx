@@ -66,10 +66,10 @@ export default function SavingsGoalsView() {
   const createMutation = useMutation({
     mutationFn: async (data: GoalFormData) => {
       const payload = {
-        ...data,
+        name: data.name,
         targetAmount: parseFloat(data.targetAmount),
         currentAmount: data.currentAmount ? parseFloat(data.currentAmount) : 0,
-        targetDate: data.targetDate ? new Date(data.targetDate) : null,
+        isActive: data.isActive ?? true,
       };
       const res = await apiRequest("POST", "/api/savings-goals", payload);
       return await res.json();
@@ -91,7 +91,7 @@ export default function SavingsGoalsView() {
         ...data,
         targetAmount: parseFloat(data.targetAmount),
         currentAmount: data.currentAmount ? parseFloat(data.currentAmount) : 0,
-        targetDate: data.targetDate ? new Date(data.targetDate) : null,
+        targetDate: data.targetDate && data.targetDate.trim() !== "" ? new Date(data.targetDate).getTime() : null,
       };
       const res = await apiRequest("PUT", `/api/savings-goals/${id}`, payload);
       return await res.json();
